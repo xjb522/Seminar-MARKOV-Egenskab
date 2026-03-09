@@ -1,0 +1,125 @@
+import tidyfinance as td
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# Import af data
+Novo_aktier = td.download_data(
+    domain="stock_prices",
+    symbols="NOVO-B.CO",
+    start_date="2020-01-01",
+    end_date="2026-01-01"
+)
+
+Novo_month = (
+    Novo_aktier
+    .assign(date=lambda x: x["date"].dt.to_period("M").dt.to_timestamp())
+    .groupby(["symbol", "date"], as_index=False)
+    .agg(adjusted=("adjusted_close", "last"))
+    .sort_values(["symbol", "date"])
+    .assign(pct_change=lambda x: x.groupby("symbol")["adjusted"].pct_change())
+    .dropna(subset=["pct_change"])
+)
+
+Novo_month["state"] = (Novo_month["pct_change"] > 0).astype(int)
+
+# Definér de to perioder
+period_2023 = Novo_month[
+    (Novo_month["date"] >= "2023-01-01") &
+    (Novo_month["date"] <= "2023-12-31")
+].copy()
+
+period_2024mid = Novo_month[
+    (Novo_month["date"] >= "2024-06-01") &
+    (Novo_month["date"] <= "2025-12-31")
+].copy()
+
+r1 = period_2023["pct_change"].dropna()
+r2 = period_2024mid["pct_change"].dropna()
+
+# Beskrivende statistik
+summary = pd.DataFrame({
+    "Periode": ["2023", "Midt 2024 til 2025"],
+    "Antal obs": [len(r1), len(r2)],
+    "Gns. afkast": [r1.mean(), r2.mean()],
+    "Std. afkast": [r1.std(), r2.std()],
+    "Median": [r1.median(), r2.median()],
+    "Andel positive": [(r1 > 0).mean(), (r2 > 0).mean()]
+})
+
+print(summary)
+
+# Statistiske test
+t_test = stats.ttest_ind(r1, r2, equal_var=False)   # Welch t-test
+ks_test = stats.ks_2samp(r1, r2)                    # forskel i hele fordelingen
+mw_test = stats.mannwhitneyu(r1, r2, alternative="two-sided")  # robust ikke-parametrisk
+
+print("\nWelch t-test:")
+print(t_test)
+
+print("\nKolmogorov-Smirnov test:")
+print(ks_test)
+
+print("\nMann-Whitney test:")
+print(mw_test)
+
+
+# Plot 
+fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+
+# Histogram
+bins = np.linspace(
+    min(r1.min(), r2.min()),
+    max(r1.max(), r2.max()),
+    12
+)
+
+ax[0].hist(r1, bins=bins, alpha=0.6, density=True, label="2023")
+ax[0].hist(r2, bins=bins, alpha=0.6, density=True, label="Midt 2024 til 2025")
+ax[0].axvline(r1.mean(), linestyle="--", label="Gns. 2023")
+ax[0].axvline(r2.mean(), linestyle="--", label="Gns. Midt 2024+")
+ax[0].set_title("Fordeling af månedlige afkast")
+ax[0].set_xlabel("Månedligt afkast")
+ax[0].set_ylabel("Tæthed")
+ax[0].legend()
+ax[0].grid(True)
+
+# Tidsserie markeret med perioder
+ax[1].plot(Novo_month["date"], Novo_month["pct_change"])
+ax[1].axvspan(pd.Timestamp("2023-01-01"), pd.Timestamp("2023-12-31"), alpha=0.2, label="2023")
+ax[1].axvspan(pd.Timestamp("2024-06-01"), pd.Timestamp("2025-12-31"), alpha=0.2, label="Midt 2024 til 2025")
+ax[1].axhline(0, color="black", linewidth=1)
+ax[1].set_title("Månedlige afkast og sammenlignede perioder")
+ax[1].set_xlabel("Dato")
+ax[1].set_ylabel("Afkast")
+ax[1].legend()
+ax[1].grid(True)
+
+plt.tight_layout()
+plt.show()
+
+import seaborn as sns
+
+fig, ax = plt.subplots(figsize=(8,5))
+
+# Histogram
+sns.histplot(r1, bins=10, stat="density", color="blue", alpha=0.35, label="2023", ax=ax)
+sns.histplot(r2, bins=10, stat="density", color="orange", alpha=0.35, label="Midt 2024 til 2025", ax=ax)
+
+# KDE kurver
+sns.kdeplot(r1, color="blue", linewidth=2, ax=ax)
+sns.kdeplot(r2, color="orange", linewidth=2, ax=ax)
+
+# Mean linjer
+ax.axvline(r1.mean(), color="blue", linestyle="--", linewidth=2, label="Mean 2023")
+ax.axvline(r2.mean(), color="orange", linestyle="--", linewidth=2, label="Mean Midt 2024+")
+
+ax.set_title("Fordeling af månedlige afkast (Novo Nordisk)")
+ax.set_xlabel("Månedligt afkast")
+ax.set_ylabel("Tæthed")
+ax.legend()
+ax.grid(True)
+
+plt.tight_layout()
+plt.show()
