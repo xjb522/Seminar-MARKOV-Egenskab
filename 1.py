@@ -4,12 +4,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
 
+Start = "2020-01-01"
+End = "2026-01-01"
+
 # Import af data
 Novo_aktier = td.download_data(
     domain="stock_prices",
     symbols="NOVO-B.CO",
-    start_date="2020-01-01",
-    end_date="2026-01-01"
+    start_date=Start,
+    end_date=End
+)
+
+# importering af treasure data
+Ten_year_treasure_bonds = td.download_data(
+    domain="stock_prices",
+    symbols="^IRX",
+    start_date=Start,
+    end_date=End
 )
 
 Novo_month = (
@@ -21,6 +32,13 @@ Novo_month = (
     .assign(pct_change=lambda x: x.groupby("symbol")["adjusted"].pct_change())
     .dropna(subset=["pct_change"])
 )
+
+TYTB_month2 = (Ten_year_treasure_bonds
+    .assign(date=lambda x: x["date"].dt.to_period("M").dt.to_timestamp())
+    .groupby(["symbol", "date"], as_index=False)
+    .agg(adjusted=("adjusted_close", "last"))
+
+    )
 
 Novo_month["state"] = (Novo_month["pct_change"] > 0).astype(int)
 
