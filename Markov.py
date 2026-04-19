@@ -49,25 +49,19 @@ df = (
     .assign(r_excess=lambda x: x["r_m"] - x["r_f"])
     .dropna()
     .sort_values("date")
+    .set_index("date")
 )
 
-# Use date as index
-df = df.set_index("date")
-
-# Quick plot
-plt.figure(figsize=(10, 4))
-plt.plot(df.index, df["r_excess"])
-plt.title("Monthly S&P 500 Excess Returns")
-plt.show()
-
-# Final series for model
-y = df["r_m"].astype(float).dropna()
+# Vælg serie til modellerne
+y = df["r_excess"].astype(float).dropna()
 
 print(y.isna().sum())
 print(np.isinf(y).sum())
 print(y.describe())
 
-# Estimate 2-regime Markov-switching model
+# -----------------------------
+# Model 1: MarkovRegression
+# -----------------------------
 mod = sm.tsa.MarkovRegression(
     y,
     k_regimes=2,
@@ -78,6 +72,9 @@ mod = sm.tsa.MarkovRegression(
 res = mod.fit(em_iter=10, search_reps=5)
 print(res.summary())
 
+# -----------------------------
+# Model 2: MarkovAutoregression
+# -----------------------------
 mod_ar = sm.tsa.MarkovAutoregression(
     y,
     k_regimes=2,
@@ -88,3 +85,41 @@ mod_ar = sm.tsa.MarkovAutoregression(
 
 res_ar = mod_ar.fit(em_iter=10, search_reps=5)
 print(res_ar.summary())
+
+# Smoothed probabilities
+probs = res.smoothed_marginal_probabilities
+probs_ar = res_ar.smoothed_marginal_probabilities
+
+
+plt.clf
+# -----------------------------
+# Plot begge modeller
+# -----------------------------
+fig, axes = plt.subplots(
+    3, 1, figsize=(14, 10), sharex=True,
+    gridspec_kw={"height_ratios": [2, 1, 1]}
+)
+
+# Panel 1: returns
+axes[0].plot(y.index, y, color="black", lw=1)
+axes[0].set_title("Monthly S&P 500 Excess Returns")
+axes[0].set_ylabel("Return")
+axes[0].axhline(0, color="gray", linestyle="--", linewidth=0.8)
+
+# Panel 2: MarkovRegression
+axes[1].plot(probs.index, probs[1], linestyle="--", lw=1.5)
+axes[1].set_title("Smoothed Probability of Regime 2 - MarkovRegression")
+axes[1].set_ylabel("Probability")
+axes[1].set_ylim(0, 1)
+
+# Panel 3: MarkovAutoregression
+axes[2].plot(probs_ar.index, probs_ar[1], linestyle="--", lw=1.5)
+axes[2].set_title("Smoothed Probability of Regime 2 - MarkovAutoregression")
+axes[2].set_ylabel("Probability")
+axes[2].set_ylim(0, 1)
+axes[2].set_xlabel("Date")
+
+
+
+plt.tight_layout()
+plt.show()
