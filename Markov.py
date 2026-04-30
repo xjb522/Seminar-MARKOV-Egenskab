@@ -54,6 +54,21 @@ df = (
     .sort_values("date")
     .set_index("date")
 )
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(12, 6))
+
+ax.plot(sp500_m["date"], sp500_m["r_m"] * 100, linewidth=1)
+ax.axhline(0, linestyle="--", linewidth=1)
+
+ax.set_title("S&P 500 Monthly Returns (%)")
+ax.set_xlabel("Date")
+ax.set_ylabel("Monthly return (%)")
+
+fig.tight_layout()
+
+
+plt.show()
 
 # Vælg serie til modellerne
 y = df["r_excess"].astype(float).dropna()
