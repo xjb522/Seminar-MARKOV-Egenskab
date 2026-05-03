@@ -1,55 +1,8 @@
-import numpy as np
-import pandas as pd
-import statsmodels.api as sm
-from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.ar_model import AutoReg
 
 # ============================================================
-# 0. Prepare data
-# ============================================================
-
-y = df["r_excess"].astype(float).dropna()
-
-# Optional: make monthly frequency explicit
-y = y.asfreq("MS")
-
-# ============================================================
-# 1. Estimate MarkovRegression
-# ============================================================
-
-mod_mr = sm.tsa.MarkovRegression(
-    y,
-    k_regimes=2,
-    trend="c",
-    switching_variance=True
-)
-
-res_mr = mod_mr.fit(
-    em_iter=10,
-    search_reps=5,
-    disp=False
-)
-
-# ============================================================
-# 2. Estimate MarkovAutoregression
-# ============================================================
-
-mod_mar = sm.tsa.MarkovAutoregression(
-    y,
-    k_regimes=2,
-    order=1,
-    trend="c",
-    switching_variance=True
-)
-
-res_mar = mod_mar.fit(
-    em_iter=10,
-    search_reps=5,
-    disp=False
-)
-
-# ============================================================
-# 3. Select best AR(p) model by AIC
+# 1. Select best AR(p) model by AIC
 # ============================================================
 
 ar_results = []
@@ -58,14 +11,14 @@ max_p = 12
 
 for p in range(1, max_p + 1):
     try:
-        res_ar = AutoReg(y, lags=p, old_names=False).fit()
+        ar_fit = AutoReg(y, lags=p, old_names=False).fit()
 
         ar_results.append({
             "Model": f"AR({p})",
             "p": p,
-            "LogLik": res_ar.llf,
-            "AIC": res_ar.aic,
-            "BIC": res_ar.bic
+            "LogLik": ar_fit.llf,
+            "AIC": ar_fit.aic,
+            "BIC": ar_fit.bic
         })
 
     except Exception as e:
@@ -76,8 +29,9 @@ ar_table = pd.DataFrame(ar_results).sort_values("AIC").reset_index(drop=True)
 best_ar_p = int(ar_table.loc[0, "p"])
 best_ar = AutoReg(y, lags=best_ar_p, old_names=False).fit()
 
+
 # ============================================================
-# 4. Select best ARMA(p,q) model by AIC
+# 2. Select best ARMA(p,q) model by AIC
 # ============================================================
 
 arma_results = []
@@ -92,7 +46,7 @@ for p in range(max_p + 1):
             continue
 
         try:
-            res_arma = ARIMA(
+            arma_fit = ARIMA(
                 y,
                 order=(p, 0, q),
                 trend="c"
@@ -102,9 +56,9 @@ for p in range(max_p + 1):
                 "Model": f"ARMA({p},{q})",
                 "p": p,
                 "q": q,
-                "LogLik": res_arma.llf,
-                "AIC": res_arma.aic,
-                "BIC": res_arma.bic
+                "LogLik": arma_fit.llf,
+                "AIC": arma_fit.aic,
+                "BIC": arma_fit.bic
             })
 
         except Exception as e:
@@ -121,32 +75,36 @@ best_arma = ARIMA(
     trend="c"
 ).fit()
 
+
 # ============================================================
-# 5. Final in-sample comparison table
+# 3. Final in-sample comparison table
+# Uses your existing Markov models:
+# res    = MarkovRegression result
+# res_ar = MarkovAutoregression result
 # ============================================================
 
 comparison = pd.DataFrame({
     "Model": [
-        "MarkovRegression",
-        "MarkovAutoregression",
+        "Markov Regression",
+        "Markov Autoregression",
         f"AR({best_ar_p})",
         f"ARMA({best_arma_p},{best_arma_q})"
     ],
     "LogLik": [
-        res_mr.llf,
-        res_mar.llf,
+        res.llf,
+        res_ar.llf,
         best_ar.llf,
         best_arma.llf
     ],
     "AIC": [
-        res_mr.aic,
-        res_mar.aic,
+        res.aic,
+        res_ar.aic,
         best_ar.aic,
         best_arma.aic
     ],
     "BIC": [
-        res_mr.bic,
-        res_mar.bic,
+        res.bic,
+        res_ar.bic,
         best_ar.bic,
         best_arma.bic
     ]
@@ -163,8 +121,9 @@ print(arma_table.head(10))
 print("\nFinal in-sample model comparison:")
 print(comparison)
 
+
 # ============================================================
-# 6. Optional: export LaTeX table
+# 4. Export LaTeX table
 # ============================================================
 
 latex_table = comparison.to_latex(
