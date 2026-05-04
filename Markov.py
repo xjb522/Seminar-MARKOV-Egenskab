@@ -54,20 +54,41 @@ df = (
     .sort_values("date")
     .set_index("date")
 )
-import matplotlib.pyplot as plt
 
-fig, ax = plt.subplots(figsize=(12, 6))
+fig, ax = plt.subplots(figsize=(14, 6))
 
+# Plot
 ax.plot(sp500_m["date"], sp500_m["r_m"] * 100, linewidth=1)
 ax.axhline(0, linestyle="--", linewidth=1)
 
-ax.set_title("S&P 500 Monthly Returns (%)")
+# Regime periods (use pd.Timestamp!)
+ax.axvspan(pd.Timestamp("2008-09-01"), pd.Timestamp("2009-06-01"), alpha=0.2, label="Financial crisis")
+ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-05-01"), alpha=0.2, label="COVID shock")
+
+# Annotations (also Timestamp)
+ax.annotate(
+    "Financial crisis\nhigh volatility",
+    xy=(pd.Timestamp("2008-10-01"), -16),
+    xytext=(pd.Timestamp("2005-01-01"), -12),
+    arrowprops=dict(arrowstyle="->"),
+    fontsize=10
+)
+
+ax.annotate(
+    "COVID shock\nregime shift",
+    xy=(pd.Timestamp("2020-03-01"), -12),
+    xytext=(pd.Timestamp("2016-01-01"), -8),
+    arrowprops=dict(arrowstyle="->"),
+    fontsize=10
+)
+
+# Labels
+ax.set_title("S&P 500 Monthly Returns and Regime Shifts (%)")
 ax.set_xlabel("Date")
 ax.set_ylabel("Monthly return (%)")
 
+ax.legend()
 fig.tight_layout()
-
-
 plt.show()
 
 # Vælg serie til modellerne
