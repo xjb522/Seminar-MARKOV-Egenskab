@@ -1,3 +1,4 @@
+from matplotlib import colorbar
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -63,7 +64,7 @@ ax.axhline(0, linestyle="--", linewidth=1)
 
 # Regime periods (use pd.Timestamp!)
 ax.axvspan(pd.Timestamp("2008-09-01"), pd.Timestamp("2009-06-01"), alpha=0.2, label="Financial crisis")
-ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-05-01"), alpha=0.2, label="COVID shock")
+ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2022-05-01"), alpha=0.2, label="COVID shock", color = "Red")
 
 # Annotations (also Timestamp)
 ax.annotate(
