@@ -99,6 +99,17 @@ print(y.isna().sum())
 print(np.isinf(y).sum())
 print(y.describe())
 
+# Histogram
+plt.figure(figsize=(10,6))
+plt.hist(y, bins=30)
+
+# Labels
+plt.title("Distribution of Returns")
+plt.xlabel("Excess Returns")
+plt.ylabel("Frequency")
+
+plt.show()
+
 # -----------------------------
 # Model 1: MarkovRegression
 # -----------------------------
@@ -243,7 +254,109 @@ ax[0].set_title("GARCH Conditional Volatility")
 ax[1].plot(probs.index, probs[0], label="Prob high-vol regime", linestyle="--")
 ax[1].set_title("Markov Regime Probability")
 
+
 plt.tight_layout()
 plt.show()
 
+import matplotlib.pyplot as plt
+import pandas as pd
 
+# Datetime
+y.index = pd.to_datetime(y.index)
+probs.index = pd.to_datetime(probs.index)
+
+high_vol_prob = probs[0]
+
+fig, axes = plt.subplots(
+    2, 1,
+    figsize=(14, 8),
+    sharex=True,
+    gridspec_kw={"height_ratios": [2, 1]}
+)
+
+ax = axes[0]
+ax2 = axes[1]
+
+# =========================
+# Define colors
+# =========================
+dotcom_color = "steelblue"
+gfc_color = "red"
+covid_color = "green"
+
+# =========================
+# Top plot: Returns
+# =========================
+ax.plot(y.index, y * 100, linewidth=1, label="S&P 500 excess returns")
+ax.axhline(0, linestyle="--", linewidth=1)
+
+# --- Crisis shading (TOP) ---
+ax.axvspan(pd.Timestamp("2000-03-01"), pd.Timestamp("2002-10-01"),
+           alpha=0.2, color=dotcom_color, label="Dot-com crash")
+
+ax.axvspan(pd.Timestamp("2008-09-01"), pd.Timestamp("2009-06-01"),
+           alpha=0.2, color=gfc_color, label="Financial crisis")
+
+ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-06-01"),
+           alpha=0.2, color=covid_color, label="COVID shock")
+
+# --- Annotations (fixed positions) ---
+ax.annotate(
+    "Dot-com crash\nhigh volatility",
+    xy=(pd.Timestamp("2001-09-01"), 8),          # pil peger på data
+    xytext=(pd.Timestamp("2003-01-01"), 12),     # flyttet op!
+    arrowprops=dict(arrowstyle="->"),
+    fontsize=10
+)
+
+ax.annotate(
+    "Financial crisis\nhigh volatility",
+    xy=(pd.Timestamp("2008-10-01"), -16),
+    xytext=(pd.Timestamp("2005-01-01"), -12),
+    arrowprops=dict(arrowstyle="->"),
+    fontsize=10
+)
+
+ax.annotate(
+    "COVID shock\nregime shift",
+    xy=(pd.Timestamp("2020-03-01"), -12),
+    xytext=(pd.Timestamp("2016-01-01"), -6),
+    arrowprops=dict(arrowstyle="->"),
+    fontsize=10
+)
+
+ax.set_title("S&P 500 Monthly Excess Returns and Regime Shifts")
+ax.set_ylabel("Monthly excess return (%)")
+ax.legend(loc="lower left")
+
+
+# =========================
+# Bottom plot: High-vol prob
+# =========================
+ax2.plot(
+    high_vol_prob.index,
+    high_vol_prob,
+    linewidth=1.5,
+    label="High-volatility regime probability"
+)
+
+ax2.axhline(0.5, linestyle="--", linewidth=1, label="0.5 threshold")
+
+# --- SAME shading (BOTTOM) ---
+ax2.axvspan(pd.Timestamp("2000-03-01"), pd.Timestamp("2002-10-01"),
+            alpha=0.2, color=dotcom_color)
+
+ax2.axvspan(pd.Timestamp("2008-09-01"), pd.Timestamp("2009-06-01"),
+            alpha=0.2, color=gfc_color)
+
+ax2.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-06-01"),
+            alpha=0.2, color=covid_color)
+
+ax2.set_title("Smoothed Probability of High-Volatility Regime")
+ax2.set_xlabel("Date")
+ax2.set_ylabel("Probability")
+ax2.set_ylim(0, 1.05)
+ax2.legend(loc="upper right")
+
+fig.tight_layout()
+plt.show()

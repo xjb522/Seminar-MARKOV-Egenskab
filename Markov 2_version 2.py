@@ -84,6 +84,7 @@ mr_res = mr.fit(
     disp=False
 )
 
+print(mr_res.summary())
 print("\nMarkov Switching results")
 print("AIC:", mr_res.aic)
 print("BIC:", mr_res.bic)
