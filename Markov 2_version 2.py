@@ -327,3 +327,57 @@ plt.ylim(0, 1)
 plt.legend()
 plt.tight_layout()
 plt.show()
+
+
+# ============================================================
+# 9B. Diebold-Mariano test
+# ============================================================
+
+from dieboldmariano import dm_test
+
+# Actual values
+actual = y_test.values
+
+# Predictions
+pred_ar = ar_forecast.values
+pred_markov = markov_forecast.values
+pred_arma = arma_forecast.values
+
+print("\nDiebold-Mariano tests")
+print("H0: Equal forecast accuracy")
+
+# AR(1) vs Markov
+stat, p = dm_test(
+    actual,
+    pred_ar,
+    pred_markov,
+    one_sided=False
+)
+
+print("\nAR(1) vs Markov Switching")
+print("DM statistic:", stat)
+print("p-value:", p)
+
+# AR(1) vs ARMA
+stat, p = dm_test(
+    actual,
+    pred_ar,
+    pred_arma,
+    one_sided=False
+)
+
+print("\nAR(1) vs ARMA")
+print("DM statistic:", stat)
+print("p-value:", p)
+
+# Markov vs ARMA
+stat, p = dm_test(
+    actual,
+    pred_markov,
+    pred_arma,
+    one_sided=False
+)
+
+print("\nMarkov Switching vs ARMA")
+print("DM statistic:", stat)
+print("p-value:", p)
