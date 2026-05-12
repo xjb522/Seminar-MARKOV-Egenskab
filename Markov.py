@@ -245,3 +245,5 @@ ax[1].set_title("Markov Regime Probability")
 
 plt.tight_layout()
 plt.show()
+
+
