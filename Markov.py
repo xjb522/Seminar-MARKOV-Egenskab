@@ -265,7 +265,7 @@ import pandas as pd
 y.index = pd.to_datetime(y.index)
 probs.index = pd.to_datetime(probs.index)
 
-high_vol_prob = probs[0]
+high_vol_prob = probs[1]
 
 fig, axes = plt.subplots(
     2, 1,
@@ -294,7 +294,7 @@ ax.axhline(0, linestyle="--", linewidth=1)
 ax.axvspan(pd.Timestamp("2000-03-01"), pd.Timestamp("2002-10-01"),
            alpha=0.2, color=dotcom_color, label="Dot-com crash")
 
-ax.axvspan(pd.Timestamp("2008-09-01"), pd.Timestamp("2009-06-01"),
+ax.axvspan(pd.Timestamp("2007-12-01"), pd.Timestamp("2009-06-01"),
            alpha=0.2, color=gfc_color, label="Financial crisis")
 
 ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-06-01"),
@@ -346,7 +346,7 @@ ax2.axhline(0.5, linestyle="--", linewidth=1, label="0.5 threshold")
 ax2.axvspan(pd.Timestamp("2000-03-01"), pd.Timestamp("2002-10-01"),
             alpha=0.2, color=dotcom_color)
 
-ax2.axvspan(pd.Timestamp("2008-09-01"), pd.Timestamp("2009-06-01"),
+ax2.axvspan(pd.Timestamp("2007-12-01"), pd.Timestamp("2009-06-01"),
             alpha=0.2, color=gfc_color)
 
 ax2.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-06-01"),

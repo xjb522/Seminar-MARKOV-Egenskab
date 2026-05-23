@@ -21,6 +21,8 @@ y = y.dropna()
 # Split
 split = int(len(y) * 0.8)
 
+print(y.describe())
+
 y_train = y.iloc[:split]
 y_test = y.iloc[split:]
 
