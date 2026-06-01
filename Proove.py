@@ -110,6 +110,11 @@ ar_forecast = ar_res.predict(
     dynamic=False
 )
 
+y_test = y_test.iloc[:-1]
+
+print(y_test.size, ar_forecast.size)
+# 1315 1315
+
 ar_rmse = np.sqrt(mean_squared_error(y_test, ar_forecast))
 
 # =====================================================
